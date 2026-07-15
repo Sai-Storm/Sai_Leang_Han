@@ -114,3 +114,87 @@ interactiveItems.forEach((item) => {
     cursor.style.height = '18px';
   });
 });
+
+// Certificate modal logic
+const certThumbs = document.querySelectorAll('.cert-thumb');
+const certModal = document.getElementById('certModal');
+const certBackdrop = document.getElementById('certBackdrop');
+const certClose = document.getElementById('certClose');
+const certContent = document.getElementById('certContent');
+const certAlt = document.getElementById('certAlt');
+const certDownload = document.getElementById('certDownload');
+
+function openCert(src) {
+  if (!certModal || !certContent) return;
+  // clear
+  certContent.innerHTML = '';
+  certDownload.href = src;
+  // convert Windows absolute path to file URL when necessary
+  let url = src;
+  if (/^[a-zA-Z]:\\\\/.test(src)) {
+    // replace backslashes and encode spaces
+    url = 'file:///' + src.replace(/\\\\/g, '/').replace(/ /g, '%20');
+  }
+
+  // if PDF, show in iframe
+  if (url.toLowerCase().endsWith('.pdf')) {
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.title = 'Certificate PDF';
+    certContent.appendChild(iframe);
+  } else {
+    // otherwise create an image
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = 'Certificate preview';
+    certContent.appendChild(img);
+  }
+
+  certModal.setAttribute('aria-hidden', 'false');
+  document.documentElement.style.overflow = 'hidden';
+  // reset alt state
+  const viewer = certModal.querySelector('.cert-viewer');
+  if (viewer) viewer.classList.remove('alt');
+}
+
+function closeCert() {
+  if (!certModal || !certContent) return;
+  certModal.setAttribute('aria-hidden', 'true');
+  document.documentElement.style.overflow = '';
+  certContent.innerHTML = '';
+}
+
+certThumbs.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const src = btn.getAttribute('data-src');
+    if (src) openCert(src);
+  });
+});
+
+if (certClose) certClose.addEventListener('click', closeCert);
+if (certBackdrop) certBackdrop.addEventListener('click', closeCert);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeCert();
+});
+
+if (certAlt) {
+  certAlt.addEventListener('click', () => {
+    const viewer = certModal.querySelector('.cert-viewer');
+    if (!viewer) return;
+    viewer.classList.toggle('alt');
+    certAlt.textContent = viewer.classList.contains('alt') ? 'Original Design' : 'Alternate Design';
+  });
+}
+
+// Add subtle tilt/hint animation to project cards on hover (for devices that support hover)
+document.querySelectorAll('.project-card').forEach((card) => {
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    card.style.transform = `translateY(-6px) scale(1.01) rotateX(${ -y * 3 }deg) rotateY(${ x * 3 }deg)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = '';
+  });
+});
